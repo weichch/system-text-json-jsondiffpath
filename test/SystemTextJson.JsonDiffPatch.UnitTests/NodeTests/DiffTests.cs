@@ -1,4 +1,5 @@
-﻿using System.Text.Json.JsonDiffPatch;
+﻿using System;
+using System.Text.Json.JsonDiffPatch;
 using System.Text.Json.Nodes;
 using Xunit;
 
@@ -48,6 +49,47 @@ namespace SystemTextJson.JsonDiffPatch.UnitTests.NodeTests
             var diff = left.Diff(right);
 
             Assert.Equal("{\"_t\":\"a\",\"_0\":[\"\",1,3]}", diff!.ToJsonString());
+        }
+
+        [Fact]
+        public void Diff_Array_WithArrayObjectItemkeyFinder()
+        {
+            var source = "{ \"id\": \"1\", \"myArray\": [ { \"id\": \"2\", \"comment\": \"bogus\" }, { \"id\": \"3\", \"comment\": \"willberemoved\" }, { \"id\": \"4\", \"comment\": \"foobar\" }, { \"id\": \"5\", \"comment\": \"example\" }, { \"id\": \"6\", \"comment\": \"ok\" } ] }";
+            var modified = "{ \"id\": \"1\", \"myArray\": [ { \"id\": \"2\", \"comment\": \"bogus\" }, { \"id\": \"4\", \"comment\": \"foobar\" }, { \"id\": \"5\", \"comment\": \"example adapted\" }, { \"id\": \"6\", \"comment\": \"ok\" }, { \"id\": \"myid\", \"comment\": \"isadded\" }, { \"id\": \"myid2\", \"comment\": \"isadded2\" }]}";
+            
+            var left = JsonNode.Parse(source);
+            var right = JsonNode.Parse(modified);
+
+            var options = new JsonDiffOptions
+            {
+                ArrayObjectItemKeyFinder = (node, index) =>
+                {
+                    if (node is JsonObject obj)
+                    {
+                        if (obj.TryGetPropertyValue("id", out var value))
+                        {
+                            try
+                            {
+                                return value?.GetValue<string>() ?? "";
+                            }
+                            catch (InvalidOperationException)
+                            {
+                                return value?.GetValue<int>() ?? 0;
+                            }
+
+                        }
+                        else if (obj.TryGetPropertyValue("name", out value))
+                        {
+                            return value?.GetValue<string>() ?? "";
+                        }
+                    }
+                    return index; //fallback
+                }
+            };
+
+            var diff = left.Diff(right, options);
+
+            Assert.Equal("{\"myArray\":{\"_t\":\"a\",\"_1\":[{\"id\":\"3\",\"comment\":\"willberemoved\"},0,0],\"2\":{\"comment\":[\"example\",\"example adapted\"]},\"4\":[{\"id\":\"myid\",\"comment\":\"isadded\"}],\"5\":[{\"id\":\"myid2\",\"comment\":\"isadded2\"}]}}", diff!.ToJsonString());
         }
 
         [Fact]

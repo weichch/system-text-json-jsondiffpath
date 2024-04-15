@@ -121,7 +121,7 @@ namespace System.Text.Json.JsonDiffPatch
 
                         // We have two objects equal by position or other criteria
                         var itemDiff = new JsonDiffDelta();
-                        DiffInternal(ref itemDiff, left[entry.LeftIndex], right[entry.RightIndex], options);
+                        DiffInternal(ref itemDiff, left[commonHead + entry.LeftIndex], right[commonHead + entry.RightIndex], options);
                         if (itemDiff.Document is not null)
                         {
                             delta.ArrayChange(i, false, itemDiff);
