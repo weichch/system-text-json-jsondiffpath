@@ -14,7 +14,7 @@
     <Reference Include="System.Web" Condition="'$(TargetFramework)' == 'net462'" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'== 'netStandard2.0' or '$(TargetFramework)'== 'net462' or '$(TargetFramework)'== 'net6.0'or '$(TargetFramework)'== 'net7.0'">
     <PackageReference Include="System.Text.Json" Version="8.0.0" />
   </ItemGroup>
 
@@ -22,5 +22,5 @@
     <Compile Remove="JsonBytes.cs" />
     <None Include="JsonBytes.cs" />
   </ItemGroup>
-  
+
 </Project>
